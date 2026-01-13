@@ -1,6 +1,5 @@
-package com.example.demo.entities;
+package com.example.workPlay.entities;
 
-import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.Setter;
 

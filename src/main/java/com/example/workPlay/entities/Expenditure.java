@@ -1,9 +1,7 @@
-package com.example.demo.entities;
+package com.example.workPlay.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.Date;
 
 @Getter
 @Setter
@@ -17,12 +15,10 @@ public class Expenditure {
     @EmbeddedId
     private ExpenditureId id;
 
-    @Column(name= "amount")
+    @Column(name= "\"amount\"")
     private Integer amount;
 
 
-    @Column(name= "note")
+    @Column(name= "\"note\"")
     private String note;
-
-
 }

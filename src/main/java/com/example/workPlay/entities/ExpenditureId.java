@@ -1,13 +1,11 @@
-package com.example.demo.entities;
+package com.example.workPlay.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.Objects;
 
 @Getter
@@ -15,14 +13,14 @@ import java.util.Objects;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "\"Employee\"", schema = "public")
+@Table(name = "\"Expenditure\"", schema = "public")
 @Embeddable
 public class ExpenditureId {
 
-    @Column(name = "expenseDate")
+    @Column(name = "\"date\"")
     private LocalDate date;
 
-    @Column(name = "expenseType")
+    @Column(name = "\"expenseType\"")
     private String expenseType;
 
     @Override
