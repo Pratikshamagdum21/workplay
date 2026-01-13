@@ -1,4 +1,4 @@
-package com.example.workPlay.entities;
+package com.example.workPay.entities;
 
 import lombok.Getter;
 import lombok.Setter;

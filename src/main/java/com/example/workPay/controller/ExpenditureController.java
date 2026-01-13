@@ -1,7 +1,7 @@
-package com.example.workPlay.controller;
+package com.example.workPay.controller;
 
-import com.example.workPlay.entities.Expenditure;
-import com.example.workPlay.service.ExpenditureService;
+import com.example.workPay.entities.Expenditure;
+import com.example.workPay.service.ExpenditureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,6 +1,6 @@
-package com.example.workPlay.Repository;
+package com.example.workPay.Repository;
 
-import com.example.workPlay.entities.EmployeeHistory;
+import com.example.workPay.entities.EmployeeHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

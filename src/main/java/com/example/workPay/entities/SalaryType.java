@@ -1,4 +1,4 @@
-package com.example.workPlay.entities;
+package com.example.workPay.entities;
 
 public enum SalaryType {
     WEEKLY,

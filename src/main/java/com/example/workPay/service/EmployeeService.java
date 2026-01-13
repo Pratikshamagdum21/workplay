@@ -1,11 +1,11 @@
-package com.example.workPlay.service;
+package com.example.workPay.service;
 
-import com.example.workPlay.Repository.EmployeeHistoryRepo;
-import com.example.workPlay.Repository.EmployeeRepo;
-import com.example.workPlay.entities.Employee;
-import com.example.workPlay.entities.EmployeeHistory;
-import com.example.workPlay.entities.ErrorResponse;
-import com.example.workPlay.entities.SalaryType;
+import com.example.workPay.Repository.EmployeeHistoryRepo;
+import com.example.workPay.Repository.EmployeeRepo;
+import com.example.workPay.entities.Employee;
+import com.example.workPay.entities.EmployeeHistory;
+import com.example.workPay.entities.ErrorResponse;
+import com.example.workPay.entities.SalaryType;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

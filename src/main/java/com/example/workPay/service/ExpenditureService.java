@@ -1,7 +1,7 @@
-package com.example.workPlay.service;
+package com.example.workPay.service;
 
-import com.example.workPlay.Repository.ExpenditureRepo;
-import com.example.workPlay.entities.Expenditure;
+import com.example.workPay.Repository.ExpenditureRepo;
+import com.example.workPay.entities.Expenditure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

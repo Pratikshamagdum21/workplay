@@ -1,7 +1,7 @@
-package com.example.workPlay.Repository;
+package com.example.workPay.Repository;
 
-import com.example.workPlay.entities.Expenditure;
-import com.example.workPlay.entities.ExpenditureId;
+import com.example.workPay.entities.Expenditure;
+import com.example.workPay.entities.ExpenditureId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
