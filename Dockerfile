@@ -1,29 +1,32 @@
 # ---- Build Stage ----
-FROM gradle:8.7-jdk17 AS builder
+FROM eclipse-temurin:17-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Copy gradle config files first for dependency caching
-COPY build.gradle settings.gradle ./
+# Copy wrapper scripts and wrapper/ dir first
+COPY gradlew gradlew.bat ./
 COPY gradle gradle
 
-# Download dependencies (layer cached unless build files change)
-RUN gradle dependencies --no-daemon || true
+# Set execute bit (on-disk permissions are -rw-r--r--)
+RUN chmod +x gradlew
 
-# Copy source code and build the JAR
+# Copy build descriptors for dependency caching
+COPY build.gradle settings.gradle ./
+
+# Pre-download dependencies (cached layer if build files unchanged)
+RUN ./gradlew dependencies --no-daemon || true
+
+# Copy source and build the JAR
 COPY src src
-RUN gradle bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon
 
 # ---- Runtime Stage ----
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Copy the built JAR from the builder stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Expose the application port
 EXPOSE 8081
 
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
