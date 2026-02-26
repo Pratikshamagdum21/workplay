@@ -46,6 +46,11 @@ public class EmployeeService {
         return CollectionUtils.isEmpty(empRepo.findAll()) ? Collections.emptyList() : empRepo.findAll();
     }
 
+    public List<Employee> getEmployeesByBranch(Integer branchId) {
+        List<Employee> employees = empRepo.findByBranchId(branchId);
+        return CollectionUtils.isEmpty(employees) ? Collections.emptyList() : employees;
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteById(Integer id) {
 
