@@ -72,4 +72,7 @@ public class SalaryRecord {
 
     @Column(name = "branch_id")
     private Integer branchId;
+
+    @Transient
+    private String employeeName;
 }
