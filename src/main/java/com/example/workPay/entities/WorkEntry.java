@@ -1,5 +1,7 @@
 package com.example.workPay.entities;
 
+import com.example.workPay.config.FlexibleLocalDateDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,12 +27,10 @@ public class WorkEntry {
     @Column(name = "employee_type", nullable = false)
     private String employeeType;
 
-    @Column(name = "shift", nullable = false)
-    private String shift;
-
     @Column(name = "fabric_meters", nullable = false)
     private Double fabricMeters;
 
+    @JsonDeserialize(using = FlexibleLocalDateDeserializer.class)
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
