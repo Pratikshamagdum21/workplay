@@ -108,7 +108,7 @@ public class EmployeeService {
                     break;
 
                 case "salaryType":
-                    employee.setSalaryType((SalaryType) value);
+                    employee.setSalaryType(SalaryType.valueOf(((String) value).toUpperCase()));
                     break;
 
                 default:
