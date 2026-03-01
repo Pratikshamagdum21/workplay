@@ -18,9 +18,9 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (branchRepository.count() == 0) {
             branchRepository.saveAll(List.of(
-                    Branch.builder().name("Main Branch").code("MB-001").location("Mumbai").build(),
-                    Branch.builder().name("North Branch").code("NB-002").location("Delhi").build(),
-                    Branch.builder().name("South Branch").code("SB-003").location("Chennai").build()
+                    Branch.builder().name("Unit 1").code("MB-001").location("Mumbai").build(),
+                    Branch.builder().name("Unit 2").code("NB-002").location("Delhi").build(),
+                    Branch.builder().name("Unit 3").code("SB-003").location("Chennai").build()
             ));
         }
     }
