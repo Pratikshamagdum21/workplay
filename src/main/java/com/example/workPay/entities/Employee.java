@@ -36,4 +36,7 @@ public class Employee {
     @Column(name = "\"clothDoneInMeter\"")
     private Integer clothDoneInMeter;
 
+    @Column(name = "branch_id")
+    private Integer branchId;
+
 }
