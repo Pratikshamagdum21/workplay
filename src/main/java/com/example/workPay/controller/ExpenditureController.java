@@ -19,8 +19,9 @@ public class ExpenditureController {
     }
 
     @GetMapping("expenditure/getAllExpenditure")
-    public ResponseEntity<List<Expenditure>> getAllExpenditure() {
-        return ResponseEntity.ok(expenditureService.findAll());
+    public ResponseEntity<List<Expenditure>> getAllExpenditure(
+            @RequestParam(required = false) Integer branchId) {
+        return ResponseEntity.ok(expenditureService.findAll(branchId));
     }
 
     @DeleteMapping("expenditure/delete")

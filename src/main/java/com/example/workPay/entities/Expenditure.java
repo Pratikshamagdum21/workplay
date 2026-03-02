@@ -30,6 +30,9 @@ public class Expenditure {
     @Column(name= "\"note\"")
     private String note;
 
+    @Column(name = "\"branchId\"")
+    private Integer branchId;
+
     @PrePersist
     public void generateId() {
         if (this.id == null || this.id.isEmpty()) {
