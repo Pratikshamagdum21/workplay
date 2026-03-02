@@ -4,10 +4,7 @@ import com.example.workPay.entities.Expenditure;
 import com.example.workPay.service.ExpenditureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,7 +19,16 @@ public class ExpenditureController {
     }
 
     @GetMapping("expenditure/getAllExpenditure")
-    public ResponseEntity<List<Expenditure>> getAllExpenditure(){
+    public ResponseEntity<List<Expenditure>> getAllExpenditure() {
         return ResponseEntity.ok(expenditureService.findAll());
+    }
+
+    @DeleteMapping("expenditure/delete")
+    public ResponseEntity<?> delete(@RequestParam String id, @RequestParam String expenseType) {
+        boolean deleted = expenditureService.deleteByIdAndExpenseType(id, expenseType);
+        if (deleted) {
+            return ResponseEntity.ok().body("Expenditure deleted successfully");
+        }
+        return ResponseEntity.notFound().build();
     }
 }
