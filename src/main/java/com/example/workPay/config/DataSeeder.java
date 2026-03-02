@@ -20,7 +20,8 @@ public class DataSeeder implements CommandLineRunner {
             branchRepository.saveAll(List.of(
                     Branch.builder().name("Unit 1").code("MB-001").location("Mumbai").build(),
                     Branch.builder().name("Unit 2").code("NB-002").location("Delhi").build(),
-                    Branch.builder().name("Unit 3").code("SB-003").location("Chennai").build()
+                    Branch.builder().name("Unit 3").code("SB-003").location("Chennai").build(),
+                    Branch.builder().name("Unit 4").code("KB-004").location("Kolkata").build()
             ));
         }
     }
