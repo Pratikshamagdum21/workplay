@@ -22,6 +22,14 @@ public class WorkEntryService {
         return workEntryRepository.findAll();
     }
 
+    public boolean deleteWork(String id) {
+        if (workEntryRepository.existsById(id)) {
+            workEntryRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
     public WorkEntry saveWork(WorkEntry entry) {
         if (entry.getId() == null || entry.getId().isBlank()) {
             entry.setId(UUID.randomUUID().toString());
