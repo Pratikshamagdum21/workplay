@@ -25,4 +25,13 @@ public class WorkController {
     public ResponseEntity<WorkEntry> saveWork(@RequestBody WorkEntry entry) {
         return ResponseEntity.ok(workEntryService.saveWork(entry));
     }
+
+    @DeleteMapping("work/deleteWork")
+    public ResponseEntity<?> deleteWork(@RequestParam String id) {
+        boolean deleted = workEntryService.deleteWork(id);
+        if (deleted) {
+            return ResponseEntity.ok().body("Work entry deleted successfully");
+        }
+        return ResponseEntity.notFound().build();
+    }
 }
