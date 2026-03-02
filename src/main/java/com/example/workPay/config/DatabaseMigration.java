@@ -33,19 +33,25 @@ public class DatabaseMigration implements CommandLineRunner {
             "UPDATE public.\"Expenditure\" SET \"id\" = gen_random_uuid()::text WHERE \"id\" IS NULL"
         );
 
-        // Drop old composite primary key if it exists
+        // Drop any existing primary key constraint on the table
         jdbcTemplate.execute(
-            "DO $$ BEGIN " +
-            "ALTER TABLE public.\"Expenditure\" DROP CONSTRAINT IF EXISTS \"Expenditure_pkey\"; " +
-            "EXCEPTION WHEN undefined_object THEN NULL; END $$"
+            "DO $$ " +
+            "DECLARE pk_name TEXT; " +
+            "BEGIN " +
+            "SELECT constraint_name INTO pk_name FROM information_schema.table_constraints " +
+            "WHERE table_schema='public' AND table_name='Expenditure' AND constraint_type='PRIMARY KEY'; " +
+            "IF pk_name IS NOT NULL THEN " +
+            "EXECUTE format('ALTER TABLE public.\"Expenditure\" DROP CONSTRAINT \"%s\"', pk_name); " +
+            "END IF; " +
+            "END $$"
         );
 
-        // Set id as primary key
+        // Set id as NOT NULL and add as primary key
         jdbcTemplate.execute(
-            "DO $$ BEGIN " +
-            "ALTER TABLE public.\"Expenditure\" ALTER COLUMN \"id\" SET NOT NULL; " +
-            "ALTER TABLE public.\"Expenditure\" ADD PRIMARY KEY (\"id\"); " +
-            "EXCEPTION WHEN duplicate_object THEN NULL; END $$"
+            "ALTER TABLE public.\"Expenditure\" ALTER COLUMN \"id\" SET NOT NULL"
+        );
+        jdbcTemplate.execute(
+            "ALTER TABLE public.\"Expenditure\" ADD PRIMARY KEY (\"id\")"
         );
 
         // Add branchId column if it doesn't exist
