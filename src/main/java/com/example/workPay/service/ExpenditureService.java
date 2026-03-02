@@ -13,14 +13,21 @@ public class ExpenditureService {
     @Autowired
     private ExpenditureRepo expenditureRepo;
 
-
     public Optional<Expenditure> save(Expenditure expenditure) {
         return Optional.ofNullable(expenditure)
                 .map(expend -> expenditureRepo.save(expend));
-
     }
 
-    public List<Expenditure> findAll(){
+    public List<Expenditure> findAll() {
         return expenditureRepo.findAll();
+    }
+
+    public boolean deleteByIdAndExpenseType(String id, String expenseType) {
+        Optional<Expenditure> expenditure = expenditureRepo.findByIdAndExpenseType(id, expenseType);
+        if (expenditure.isPresent()) {
+            expenditureRepo.delete(expenditure.get());
+            return true;
+        }
+        return false;
     }
 }
