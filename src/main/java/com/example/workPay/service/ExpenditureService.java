@@ -18,7 +18,10 @@ public class ExpenditureService {
                 .map(expend -> expenditureRepo.save(expend));
     }
 
-    public List<Expenditure> findAll() {
+    public List<Expenditure> findAll(Integer branchId) {
+        if (branchId != null) {
+            return expenditureRepo.findByBranchId(branchId);
+        }
         return expenditureRepo.findAll();
     }
 
