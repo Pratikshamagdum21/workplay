@@ -12,4 +12,6 @@ public interface SalaryRecordRepository extends JpaRepository<SalaryRecord, Long
     List<SalaryRecord> findByBranchId(Integer branchId);
     List<SalaryRecord> findByEmployeeIdAndCreatedAtBetween(
             Long employeeId, LocalDateTime start, LocalDateTime end);
+    List<SalaryRecord> findAllByOrderByCreatedAtDesc();
+    List<SalaryRecord> findByBranchIdOrderByCreatedAtDesc(Integer branchId);
 }

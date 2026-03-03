@@ -43,11 +43,12 @@ public class EmployeeService {
     }
 
     public List<Employee> findAll() {
-        return CollectionUtils.isEmpty(empRepo.findAll()) ? Collections.emptyList() : empRepo.findAll();
+        List<Employee> employees = empRepo.findAllByOrderByIdDesc();
+        return CollectionUtils.isEmpty(employees) ? Collections.emptyList() : employees;
     }
 
     public List<Employee> getEmployeesByBranch(Integer branchId) {
-        List<Employee> employees = empRepo.findByBranchId(branchId);
+        List<Employee> employees = empRepo.findByBranchIdOrderByIdDesc(branchId);
         return CollectionUtils.isEmpty(employees) ? Collections.emptyList() : employees;
     }
 

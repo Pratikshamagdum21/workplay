@@ -20,9 +20,9 @@ public class ExpenditureService {
 
     public List<Expenditure> findAll(Integer branchId) {
         if (branchId != null) {
-            return expenditureRepo.findByBranchId(branchId);
+            return expenditureRepo.findByBranchIdOrderByDateDesc(branchId);
         }
-        return expenditureRepo.findAll();
+        return expenditureRepo.findAllByOrderByDateDesc();
     }
 
     public boolean deleteByIdAndExpenseType(String id, String expenseType) {

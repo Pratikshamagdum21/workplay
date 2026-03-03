@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface EmployeeRepo extends JpaRepository<Employee, Integer> {
     List<Employee> findByBranchId(Integer branchId);
+    List<Employee> findAllByOrderByIdDesc();
+    List<Employee> findByBranchIdOrderByIdDesc(Integer branchId);
 }

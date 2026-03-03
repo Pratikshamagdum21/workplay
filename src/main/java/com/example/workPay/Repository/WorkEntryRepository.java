@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface WorkEntryRepository extends JpaRepository<WorkEntry, String> {
     List<WorkEntry> findByBranchId(Integer branchId);
+    List<WorkEntry> findAllByOrderByCreatedAtDesc();
+    List<WorkEntry> findByBranchIdOrderByCreatedAtDesc(Integer branchId);
 }
