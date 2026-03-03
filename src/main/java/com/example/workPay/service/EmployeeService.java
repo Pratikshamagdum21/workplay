@@ -87,7 +87,7 @@ public class EmployeeService {
                     employee.setFabricType((String) value);
                     break;
                 case "rate":
-                    employee.setRate(((Number) value).intValue());
+                    employee.setRate(((Number) value).doubleValue());
                     break;
                 case "advanceRemaining":
                     employee.setAdvanceRemaining(((Number) value).intValue());

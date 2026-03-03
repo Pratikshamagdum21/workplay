@@ -43,7 +43,7 @@ public class EmployeeController {
             @RequestParam Integer advanceAmount,
             @RequestParam Integer advanceRemaining,
             @RequestParam String salaryType,
-            @RequestParam Integer rate,
+            @RequestParam Double rate,
             @RequestParam Integer clothDoneInMeter,
             @RequestParam(required = false) Integer branchId) {
         Employee employee = Employee.builder()
