@@ -31,9 +31,9 @@ public class SalaryRecordService {
     public List<SalaryRecord> getAllSalary(Integer branchId) {
         List<SalaryRecord> records;
         if (branchId != null) {
-            records = salaryRecordRepository.findByBranchId(branchId);
+            records = salaryRecordRepository.findByBranchIdOrderByCreatedAtDesc(branchId);
         } else {
-            records = salaryRecordRepository.findAll();
+            records = salaryRecordRepository.findAllByOrderByCreatedAtDesc();
         }
 
         Map<Integer, String> employeeNameMap = employeeRepo.findAll().stream()

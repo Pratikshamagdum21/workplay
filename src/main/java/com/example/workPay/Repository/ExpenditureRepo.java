@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface ExpenditureRepo extends JpaRepository<Expenditure, String> {
     Optional<Expenditure> findByIdAndExpenseType(String id, String expenseType);
     List<Expenditure> findByBranchId(Integer branchId);
+    List<Expenditure> findAllByOrderByDateDesc();
+    List<Expenditure> findByBranchIdOrderByDateDesc(Integer branchId);
 }

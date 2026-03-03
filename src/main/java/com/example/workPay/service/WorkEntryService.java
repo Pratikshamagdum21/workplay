@@ -17,9 +17,9 @@ public class WorkEntryService {
 
     public List<WorkEntry> getAllWork(Integer branchId) {
         if (branchId != null) {
-            return workEntryRepository.findByBranchId(branchId);
+            return workEntryRepository.findByBranchIdOrderByCreatedAtDesc(branchId);
         }
-        return workEntryRepository.findAll();
+        return workEntryRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public boolean deleteWork(String id) {

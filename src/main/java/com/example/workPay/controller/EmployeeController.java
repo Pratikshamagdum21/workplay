@@ -64,13 +64,13 @@ public class EmployeeController {
         employeeService.deleteById(id);
     }
 
-    @PatchMapping("/emp/updateEmp/{id}")
+    @PostMapping("/emp/updateEmp/{id}")
     ResponseEntity<Employee> update(@PathVariable Integer id, @RequestBody Map<String, Object> updates){
         Employee updated = employeeService.updateFields(id, updates);
         return ResponseEntity.ok(updated);
     }
 
-    @PatchMapping("/emp/advancePaid")
+    @PostMapping("/emp/advancePaid")
     ResponseEntity<Employee> advancePaid(@RequestParam Integer id, @RequestParam Integer advancePaid){
         return ResponseEntity.ok(employeeService.calculateAdvanceRemaining(id, advancePaid));
     }
