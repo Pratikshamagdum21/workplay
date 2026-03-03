@@ -39,4 +39,7 @@ public class Employee {
     @Column(name = "branch_id")
     private Integer branchId;
 
+    @Column(name = "\"workType\"")
+    private String workType;
+
 }
