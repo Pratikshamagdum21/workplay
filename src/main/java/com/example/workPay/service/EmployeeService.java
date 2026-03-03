@@ -68,63 +68,55 @@ public class EmployeeService {
     }
 
     public Employee updateFields(Integer id, Map<String, Object> updates) {
-        Employee employee = empRepo.findById(id).orElseThrow(() -> new ErrorResponse("402", "397"));
+        Employee employee = empRepo.findById(id)
+                .orElseThrow(() -> new ErrorResponse("402", "Employee not found"));
 
         updates.forEach((key, value) -> {
+            if (value == null) return;
             switch (key) {
                 case "name":
                     employee.setName((String) value);
                     break;
-
                 case "salary":
-                    employee.setSalary((Integer) value);
+                    employee.setSalary(((Number) value).intValue());
                     break;
-
                 case "isBonused":
                     employee.setIsBonused((Boolean) value);
                     break;
-
                 case "fabricType":
                     employee.setFabricType((String) value);
                     break;
-
                 case "rate":
-                    employee.setRate((Integer) value);
+                    employee.setRate(((Number) value).intValue());
                     break;
-
                 case "advanceRemaining":
-                    employee.setAdvanceRemaining((Integer) value);
+                    employee.setAdvanceRemaining(((Number) value).intValue());
                     break;
-
                 case "advanceAmount":
-                    employee.setAdvanceAmount((Integer) value);
+                    employee.setAdvanceAmount(((Number) value).intValue());
                     break;
-
                 case "bonusAmount":
-                    employee.setBonusAmount((Integer) value);
+                    employee.setBonusAmount(((Number) value).intValue());
                     break;
-
                 case "clothdoneinmeters":
-                    employee.setClothDoneInMeter((Integer) value);
+                case "clothDoneInMeter":
+                    employee.setClothDoneInMeter(((Number) value).intValue());
                     break;
-
                 case "salaryType":
                     employee.setSalaryType(SalaryType.valueOf(((String) value).toUpperCase()));
                     break;
-
                 default:
-                    throw new ErrorResponse("402", "Invalid field");
+                    break;
             }
         });
 
-        if (empHistory.findByEmployeeId(id).isPresent()){
+        if (empHistory.findByEmployeeId(id).isPresent()) {
             EmployeeHistory employeeHistory = new EmployeeHistory();
             employeeHistory.setDate(LocalDate.now());
             employeeHistory.setNote("Active Employee");
             employeeHistory.copyDataFromEmployee(employee);
             empHistory.save(employeeHistory);
         }
-        else throw new ErrorResponse("402", "employee not found in history");
         return empRepo.save(employee);
     }
 
