@@ -32,7 +32,7 @@ public class Employee {
     @Column(name = "\"salaryType\"")
     private SalaryType salaryType;
     @Column(name = "\"rate\"")
-    private Integer rate;
+    private Double rate;
     @Column(name = "\"clothDoneInMeter\"")
     private Integer clothDoneInMeter;
 
