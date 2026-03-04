@@ -41,6 +41,9 @@ public class EmployeeHistory {
     @Column(name = "\"clothDoneInMeter\"")
     private Integer clothDoneInMeter;
 
+    @Column(name = "\"workType\"")
+    private String workType;
+
     @Column(name = "date")
     private LocalDate date;
     @Column(name = "note")
@@ -58,6 +61,7 @@ public class EmployeeHistory {
         this.setSalaryType(employee.getSalaryType());
         this.setRate(employee.getRate());
         this.setClothDoneInMeter(employee.getClothDoneInMeter());
+        this.setWorkType(employee.getWorkType());
         this.setEmployeeId(employee.getId());
     }
 }

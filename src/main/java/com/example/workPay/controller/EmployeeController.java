@@ -45,13 +45,15 @@ public class EmployeeController {
             @RequestParam String salaryType,
             @RequestParam Double rate,
             @RequestParam Integer clothDoneInMeter,
-            @RequestParam(required = false) Integer branchId) {
+            @RequestParam(required = false) Integer branchId,
+            @RequestParam(required = false) String workType) {
         Employee employee = Employee.builder()
                 .id(id).name(name).isBonused(isBonused).fabricType(fabricType)
                 .salary(salary).bonusAmount(bonusAmount).advanceAmount(advanceAmount)
                 .advanceRemaining(advanceRemaining)
                 .salaryType(SalaryType.valueOf(salaryType.toUpperCase()))
                 .rate(rate).clothDoneInMeter(clothDoneInMeter).branchId(branchId)
+                .workType(workType)
                 .build();
         return employeeService.save(employee)
                 .map(ResponseEntity::ok)
