@@ -1,7 +1,9 @@
 package com.example.workPay.service;
 
-import com.example.workPay.Repository.*;
+import com.example.workPay.Repository.BranchRepository;
 import com.example.workPay.entities.Branch;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,20 +16,8 @@ public class BranchService {
     @Autowired
     private BranchRepository branchRepository;
 
-    @Autowired
-    private EmployeeRepo employeeRepo;
-
-    @Autowired
-    private WorkEntryRepository workEntryRepository;
-
-    @Autowired
-    private SalaryRecordRepository salaryRecordRepository;
-
-    @Autowired
-    private ExpenditureRepo expenditureRepo;
-
-    @Autowired
-    private EmployeeHistoryRepo employeeHistoryRepo;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public List<Branch> getAllBranches() {
         return branchRepository.findAll();
@@ -35,12 +25,7 @@ public class BranchService {
 
     @Transactional
     public void clearAllData() {
-        salaryRecordRepository.deleteAll();
-        workEntryRepository.deleteAll();
-        expenditureRepo.deleteAll();
-        employeeHistoryRepo.deleteAll();
-        employeeRepo.deleteAll();
-        branchRepository.deleteAll();
+        entityManager.createNativeQuery("TRUNCATE TABLE salary_record, work_entry, \"Expenditure\", \"EmployeeHistory\", \"Employee\", branch CASCADE").executeUpdate();
 
         branchRepository.saveAll(List.of(
                 Branch.builder().name("Unit 1").code("MB-001").location("Mumbai").build(),
