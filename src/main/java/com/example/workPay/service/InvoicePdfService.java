@@ -104,7 +104,7 @@ public class InvoicePdfService {
         Table headerTable = new Table(1).useAllAvailableWidth();
         headerTable.addCell(new Cell()
                 .add(new Paragraph("TAX INVOICE")
-                        .setFontSize(FONT_SIZE_TITLE)
+                        .setFontSize(10)
                         .setBold()
                         .setFontColor(HEADER_TEXT)
                         .setTextAlignment(TextAlignment.CENTER))
