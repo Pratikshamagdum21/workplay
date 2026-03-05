@@ -64,10 +64,35 @@ public class InvoicePdfService {
 
         for (int i = 0; i < invoices.size(); i++) {
             if (i > 0) {
-                pdfDoc.addNewPage();
+                // Separator line at top of new page
+                Table separator = new Table(1).useAllAvailableWidth();
+                separator.addCell(new Cell()
+                        .add(new Paragraph(""))
+                        .setHeight(1)
+                        .setBorderTop(new SolidBorder(ColorConstants.DARK_GRAY, 1f))
+                        .setBorderBottom(Border.NO_BORDER)
+                        .setBorderLeft(Border.NO_BORDER)
+                        .setBorderRight(Border.NO_BORDER)
+                        .setMarginBottom(5));
+                document.add(separator);
             }
 
             addInvoiceContent(document, invoices.get(i), business, contentWidth);
+
+            if (i < invoices.size() - 1) {
+                // Separator line at bottom before page break
+                Table separator = new Table(1).useAllAvailableWidth();
+                separator.addCell(new Cell()
+                        .add(new Paragraph(""))
+                        .setHeight(1)
+                        .setBorderBottom(new SolidBorder(ColorConstants.DARK_GRAY, 1f))
+                        .setBorderTop(Border.NO_BORDER)
+                        .setBorderLeft(Border.NO_BORDER)
+                        .setBorderRight(Border.NO_BORDER)
+                        .setMarginTop(5));
+                document.add(separator);
+                pdfDoc.addNewPage();
+            }
         }
 
         document.close();
