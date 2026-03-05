@@ -19,4 +19,10 @@ public class BranchController {
     public ResponseEntity<List<Branch>> getAllBranches() {
         return ResponseEntity.ok(branchService.getAllBranches());
     }
+
+    @DeleteMapping("branch/clearAllData")
+    public ResponseEntity<String> clearAllData() {
+        branchService.clearAllData();
+        return ResponseEntity.ok("All data cleared successfully. Default branches have been re-seeded.");
+    }
 }
