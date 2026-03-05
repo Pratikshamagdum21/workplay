@@ -58,35 +58,16 @@ public class InvoicePdfService {
         PdfDocument pdfDoc = new PdfDocument(writer);
         pdfDoc.setDefaultPageSize(f4);
         Document document = new Document(pdfDoc, f4);
-        document.setMargins(15, 20, 15, 20);
+        document.setMargins(20, 25, 20, 25);
 
-        float contentWidth = f4.getWidth() - 40;
-        float halfPageHeight = (f4.getHeight() - 30) / 2f;
+        float contentWidth = f4.getWidth() - 50;
 
         for (int i = 0; i < invoices.size(); i++) {
-            if (i > 0 && i % 2 == 0) {
-                document.add(new Paragraph("").setMarginBottom(0));
+            if (i > 0) {
                 pdfDoc.addNewPage();
             }
 
-            if (i % 2 == 0 && i > 0) {
-                // top of new page
-            }
-
-            addCompactInvoiceContent(document, invoices.get(i), business, contentWidth, halfPageHeight);
-
-            if (i % 2 == 0 && i < invoices.size() - 1) {
-                // Add separator line between top and bottom invoice
-                Table separator = new Table(1).useAllAvailableWidth();
-                separator.addCell(new Cell().add(new Paragraph(""))
-                        .setHeight(1)
-                        .setBorderTop(new SolidBorder(ColorConstants.DARK_GRAY, 0.5f))
-                        .setBorderBottom(Border.NO_BORDER)
-                        .setBorderLeft(Border.NO_BORDER)
-                        .setBorderRight(Border.NO_BORDER)
-                        .setMarginTop(5).setMarginBottom(5));
-                document.add(separator);
-            }
+            addInvoiceContent(document, invoices.get(i), business, contentWidth);
         }
 
         document.close();

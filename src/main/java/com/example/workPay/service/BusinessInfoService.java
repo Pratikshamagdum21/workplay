@@ -19,6 +19,7 @@ public class BusinessInfoService {
     }
 
     public BusinessInfo createBusinessInfo(BusinessInfo businessInfo) {
+        businessInfo.setId(null);
         return businessInfoRepository.save(businessInfo);
     }
 
