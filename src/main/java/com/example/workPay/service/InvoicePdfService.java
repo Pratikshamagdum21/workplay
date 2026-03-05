@@ -42,9 +42,9 @@ public class InvoicePdfService {
         PdfDocument pdfDoc = new PdfDocument(writer);
         pdfDoc.setDefaultPageSize(f4);
         Document document = new Document(pdfDoc, f4);
-        document.setMargins(20, 25, 20, 25);
+        document.setMargins(15, 20, 15, 20);
 
-        addInvoiceContent(document, invoice, business, f4.getWidth() - 50);
+        addInvoiceContent(document, invoice, business, f4.getWidth() - 40);
 
         document.close();
         return baos.toByteArray();
@@ -58,9 +58,9 @@ public class InvoicePdfService {
         PdfDocument pdfDoc = new PdfDocument(writer);
         pdfDoc.setDefaultPageSize(f4);
         Document document = new Document(pdfDoc, f4);
-        document.setMargins(20, 25, 20, 25);
+        document.setMargins(15, 20, 15, 20);
 
-        float contentWidth = f4.getWidth() - 50;
+        float contentWidth = f4.getWidth() - 40;
 
         for (int i = 0; i < invoices.size(); i++) {
             if (i > 0) {
@@ -84,7 +84,7 @@ public class InvoicePdfService {
                         .setFontColor(HEADER_TEXT)
                         .setTextAlignment(TextAlignment.CENTER))
                 .setBackgroundColor(HEADER_BG)
-                .setPadding(8)
+                .setPadding(5)
                 .setBorder(Border.NO_BORDER));
         document.add(headerTable);
 
@@ -93,7 +93,7 @@ public class InvoicePdfService {
             Table bizTable = new Table(1).useAllAvailableWidth();
             bizTable.addCell(new Cell()
                     .add(new Paragraph(safe(business.getBusinessName()))
-                            .setFontSize(12).setBold().setTextAlignment(TextAlignment.CENTER)
+                            .setFontSize(10).setBold().setTextAlignment(TextAlignment.CENTER)
                             .setFontColor(ACCENT_COLOR))
                     .add(new Paragraph(safe(business.getAddress()))
                             .setFontSize(FONT_SIZE_NORMAL).setTextAlignment(TextAlignment.CENTER))
@@ -101,7 +101,7 @@ public class InvoicePdfService {
                             + "  |  Phone: " + safe(business.getPhoneNumber()))
                             .setFontSize(FONT_SIZE_NORMAL).setTextAlignment(TextAlignment.CENTER))
                     .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f))
-                    .setPaddingTop(6).setPaddingBottom(6));
+                    .setPaddingTop(4).setPaddingBottom(4));
             document.add(bizTable);
         }
 
@@ -116,7 +116,7 @@ public class InvoicePdfService {
                         .setFontSize(FONT_SIZE_NORMAL))
                 .add(new Paragraph("Date: " + safe(invoice.getInvoiceDate()))
                         .setFontSize(FONT_SIZE_NORMAL))
-                .setPadding(6)
+                .setPadding(4)
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f));
         infoTable.addCell(invoiceCell);
 
@@ -134,7 +134,7 @@ public class InvoicePdfService {
                         .setFontSize(FONT_SIZE_NORMAL))
                 .add(new Paragraph("State: " + safe(invoice.getCustomerState()))
                         .setFontSize(FONT_SIZE_NORMAL))
-                .setPadding(6)
+                .setPadding(4)
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f));
         infoTable.addCell(customerCell);
 
@@ -143,7 +143,7 @@ public class InvoicePdfService {
         // === FABRIC QUALITY DETAILS TABLE ===
         document.add(new Paragraph("Fabric Quality Details")
                 .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
-                .setMarginTop(8).setMarginBottom(4));
+                .setMarginTop(4).setMarginBottom(2));
 
         Table qualityTable = new Table(UnitValue.createPercentArray(new float[]{25, 15, 15, 15, 15, 15}))
                 .useAllAvailableWidth();
@@ -160,7 +160,7 @@ public class InvoicePdfService {
         // === QUANTITY & RATE TABLE ===
         document.add(new Paragraph("Quantity & Rate")
                 .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
-                .setMarginTop(8).setMarginBottom(4));
+                .setMarginTop(4).setMarginBottom(2));
 
         Table qtyTable = new Table(UnitValue.createPercentArray(new float[]{20, 20, 20, 20, 20}))
                 .useAllAvailableWidth();
@@ -175,7 +175,7 @@ public class InvoicePdfService {
         // === AMOUNT SUMMARY ===
         document.add(new Paragraph("Amount Summary")
                 .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
-                .setMarginTop(8).setMarginBottom(4));
+                .setMarginTop(4).setMarginBottom(2));
 
         Table amountTable = new Table(UnitValue.createPercentArray(new float[]{60, 40}))
                 .useAllAvailableWidth();
@@ -190,14 +190,14 @@ public class InvoicePdfService {
                         .setFontColor(HEADER_TEXT))
                 .setBackgroundColor(HEADER_BG)
                 .setTextAlignment(TextAlignment.RIGHT)
-                .setPadding(5)
+                .setPadding(3)
                 .setBorder(Border.NO_BORDER);
         Cell valueCell = new Cell()
                 .add(new Paragraph("₹ " + formatAmount(invoice.getNetPayable()))
                         .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(HEADER_TEXT))
                 .setBackgroundColor(HEADER_BG)
                 .setTextAlignment(TextAlignment.RIGHT)
-                .setPadding(5)
+                .setPadding(3)
                 .setBorder(Border.NO_BORDER);
         amountTable.addCell(labelCell);
         amountTable.addCell(valueCell);
@@ -210,7 +210,7 @@ public class InvoicePdfService {
                 .add(new Paragraph("Amount in Words: " + safe(invoice.getAmountInWords()))
                         .setFontSize(FONT_SIZE_NORMAL).setItalic())
                 .setBackgroundColor(SECTION_BG)
-                .setPadding(6)
+                .setPadding(4)
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f)));
         document.add(wordsTable);
 
@@ -221,14 +221,14 @@ public class InvoicePdfService {
                         .setFontSize(FONT_SIZE_SMALL).setBold())
                 .add(new Paragraph("1. Goods once sold will not be taken back.\n2. Subject to local jurisdiction.")
                         .setFontSize(FONT_SIZE_SMALL))
-                .setPadding(6)
+                .setPadding(4)
                 .setBorder(Border.NO_BORDER));
         footerTable.addCell(new Cell()
                 .add(new Paragraph("For " + (business != null ? safe(business.getBusinessName()) : ""))
                         .setFontSize(FONT_SIZE_SMALL).setBold().setTextAlignment(TextAlignment.RIGHT))
-                .add(new Paragraph("\n\nAuthorized Signatory")
+                .add(new Paragraph("\nAuthorized Signatory")
                         .setFontSize(FONT_SIZE_SMALL).setTextAlignment(TextAlignment.RIGHT))
-                .setPadding(6)
+                .setPadding(4)
                 .setBorder(Border.NO_BORDER));
         document.add(footerTable);
     }
@@ -358,7 +358,7 @@ public class InvoicePdfService {
                     .add(new Paragraph(header).setFontSize(FONT_SIZE_NORMAL).setBold().setFontColor(HEADER_TEXT))
                     .setBackgroundColor(ACCENT_COLOR)
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setPadding(4)
+                    .setPadding(3)
                     .setBorder(new SolidBorder(ColorConstants.WHITE, 0.5f)));
         }
     }
@@ -368,7 +368,7 @@ public class InvoicePdfService {
             table.addCell(new Cell()
                     .add(new Paragraph(value).setFontSize(FONT_SIZE_NORMAL))
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setPadding(4)
+                    .setPadding(3)
                     .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f)));
         }
     }
@@ -412,12 +412,12 @@ public class InvoicePdfService {
         table.addCell(new Cell()
                 .add(new Paragraph(label).setFontSize(FONT_SIZE_NORMAL))
                 .setTextAlignment(TextAlignment.RIGHT)
-                .setPadding(4)
+                .setPadding(3)
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f)));
         table.addCell(new Cell()
                 .add(new Paragraph("₹ " + value).setFontSize(FONT_SIZE_NORMAL))
                 .setTextAlignment(TextAlignment.RIGHT)
-                .setPadding(4)
+                .setPadding(3)
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f)));
     }
 
