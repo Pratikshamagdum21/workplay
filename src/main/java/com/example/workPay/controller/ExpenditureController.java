@@ -43,21 +43,19 @@ public class ExpenditureController {
     }
 
     @GetMapping("expenditure/getAllExpenditure")
-    public ResponseEntity<?> getAllExpenditure(
+    public ResponseEntity<List<Expenditure>> getAllExpenditure(
             @RequestParam(required = false) Integer branchId) {
         List<Expenditure> expenditures = expenditureService.findAll(branchId);
 
-        List<ExpenditureWithReceipts> result = expenditures.stream()
-                .map(exp -> {
-                    List<Long> receiptIds = expenditureService.getReceiptsByExpenseId(exp.getId())
-                            .stream()
-                            .map(ExpenseReceipt::getId)
-                            .toList();
-                    return new ExpenditureWithReceipts(exp, receiptIds);
-                })
-                .toList();
+        expenditures.forEach(exp -> {
+            List<Long> receiptIds = expenditureService.getReceiptsByExpenseId(exp.getId())
+                    .stream()
+                    .map(ExpenseReceipt::getId)
+                    .toList();
+            exp.setReceiptIds(receiptIds);
+        });
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(expenditures);
     }
 
     @GetMapping("expenditure/{expenseId}/receipts")
@@ -137,6 +135,4 @@ public class ExpenditureController {
     }
 
     private record ReceiptInfo(Long id, String fileName, String fileType, java.time.LocalDateTime uploadedAt) {}
-
-    private record ExpenditureWithReceipts(Expenditure expenditure, List<Long> receiptIds) {}
 }

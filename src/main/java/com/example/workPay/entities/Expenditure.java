@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -32,6 +33,9 @@ public class Expenditure {
 
     @Column(name = "\"branchId\"")
     private Integer branchId;
+
+    @Transient
+    private List<Long> receiptIds;
 
     @PrePersist
     public void generateId() {
