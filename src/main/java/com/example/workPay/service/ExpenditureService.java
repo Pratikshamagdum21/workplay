@@ -18,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -31,20 +32,15 @@ public class ExpenditureService {
     private ExpenseReceiptRepository expenseReceiptRepository;
 
     @Transactional
-    public Optional<Expenditure> save(Expenditure expenditure, MultipartFile image) throws IOException {
+    public Optional<Expenditure> save(Expenditure expenditure, List<MultipartFile> images) throws IOException {
         Expenditure saved = expenditureRepo.save(expenditure);
 
-        if (image != null && !image.isEmpty()) {
-            byte[] compressedImage = compressImage(image);
-
-            ExpenseReceipt receipt = ExpenseReceipt.builder()
-                    .expenseId(saved.getId())
-                    .fileName(image.getOriginalFilename())
-                    .fileType(image.getContentType())
-                    .imageData(compressedImage)
-                    .build();
-
-            expenseReceiptRepository.save(receipt);
+        if (images != null) {
+            for (MultipartFile image : images) {
+                if (image != null && !image.isEmpty()) {
+                    saveReceipt(saved.getId(), image);
+                }
+            }
         }
 
         return Optional.of(saved);
@@ -72,7 +68,7 @@ public class ExpenditureService {
     }
 
     @Transactional
-    public Optional<Expenditure> update(String id, Expenditure updated, MultipartFile image) throws IOException {
+    public Optional<Expenditure> update(String id, Expenditure updated, List<MultipartFile> images) throws IOException {
         Optional<Expenditure> existing = expenditureRepo.findById(id);
         if (existing.isEmpty()) {
             return Optional.empty();
@@ -87,19 +83,12 @@ public class ExpenditureService {
 
         Expenditure saved = expenditureRepo.save(expenditure);
 
-        if (image != null && !image.isEmpty()) {
-            byte[] compressedImage = compressImage(image);
-
-            // Replace existing receipt or create new one
-            ExpenseReceipt receipt = expenseReceiptRepository.findByExpenseId(id)
-                    .orElse(ExpenseReceipt.builder().expenseId(id).build());
-
-            receipt.setFileName(image.getOriginalFilename());
-            receipt.setFileType(image.getContentType());
-            receipt.setImageData(compressedImage);
-            receipt.setUploadedAt(java.time.LocalDateTime.now());
-
-            expenseReceiptRepository.save(receipt);
+        if (images != null) {
+            for (MultipartFile image : images) {
+                if (image != null && !image.isEmpty()) {
+                    saveReceipt(id, image);
+                }
+            }
         }
 
         return Optional.of(saved);
@@ -121,8 +110,34 @@ public class ExpenditureService {
         return Optional.of(expenditureRepo.save(expenditure));
     }
 
-    public Optional<ExpenseReceipt> getReceiptByExpenseId(String expenseId) {
+    public List<ExpenseReceipt> getReceiptsByExpenseId(String expenseId) {
         return expenseReceiptRepository.findByExpenseId(expenseId);
+    }
+
+    public Optional<ExpenseReceipt> getReceiptById(Long receiptId) {
+        return expenseReceiptRepository.findById(receiptId);
+    }
+
+    @Transactional
+    public boolean deleteReceipt(Long receiptId) {
+        if (expenseReceiptRepository.existsById(receiptId)) {
+            expenseReceiptRepository.deleteById(receiptId);
+            return true;
+        }
+        return false;
+    }
+
+    private void saveReceipt(String expenseId, MultipartFile image) throws IOException {
+        byte[] compressedImage = compressImage(image);
+
+        ExpenseReceipt receipt = ExpenseReceipt.builder()
+                .expenseId(expenseId)
+                .fileName(image.getOriginalFilename())
+                .fileType(image.getContentType())
+                .imageData(compressedImage)
+                .build();
+
+        expenseReceiptRepository.save(receipt);
     }
 
     private byte[] compressImage(MultipartFile file) throws IOException {
@@ -145,7 +160,6 @@ public class ExpenditureService {
 
         // For PNG: convert to JPEG with compression for smaller size
         if (contentType.contains("png")) {
-            // Convert to RGB (remove alpha channel) for JPEG compression
             BufferedImage rgbImage = new BufferedImage(
                     bufferedImage.getWidth(),
                     bufferedImage.getHeight(),

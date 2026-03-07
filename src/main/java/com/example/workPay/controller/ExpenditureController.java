@@ -23,13 +23,13 @@ public class ExpenditureController {
     @PostMapping(value = "expenditure/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveWithImage(
             @RequestPart("expenditure") String expenditureJson,
-            @RequestPart(value = "image", required = false) MultipartFile image) {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
             Expenditure expenditure = mapper.readValue(expenditureJson, Expenditure.class);
 
-            return expenditureService.save(expenditure, image)
+            return expenditureService.save(expenditure, images)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
@@ -48,9 +48,23 @@ public class ExpenditureController {
         return ResponseEntity.ok(expenditureService.findAll(branchId));
     }
 
-    @GetMapping("expenditure/{expenseId}/receipt")
-    public ResponseEntity<byte[]> getReceipt(@PathVariable String expenseId) {
-        Optional<ExpenseReceipt> receipt = expenditureService.getReceiptByExpenseId(expenseId);
+    @GetMapping("expenditure/{expenseId}/receipts")
+    public ResponseEntity<?> getReceipts(@PathVariable String expenseId) {
+        List<ExpenseReceipt> receipts = expenditureService.getReceiptsByExpenseId(expenseId);
+        if (receipts.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<ReceiptInfo> receiptInfos = receipts.stream()
+                .map(r -> new ReceiptInfo(r.getId(), r.getFileName(), r.getFileType(), r.getUploadedAt()))
+                .toList();
+
+        return ResponseEntity.ok(receiptInfos);
+    }
+
+    @GetMapping("expenditure/receipt/{receiptId}")
+    public ResponseEntity<byte[]> getReceiptImage(@PathVariable Long receiptId) {
+        Optional<ExpenseReceipt> receipt = expenditureService.getReceiptById(receiptId);
 
         if (receipt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -68,17 +82,25 @@ public class ExpenditureController {
                 .body(expenseReceipt.getImageData());
     }
 
+    @DeleteMapping("expenditure/receipt/{receiptId}")
+    public ResponseEntity<?> deleteReceipt(@PathVariable Long receiptId) {
+        if (expenditureService.deleteReceipt(receiptId)) {
+            return ResponseEntity.ok().body("Receipt deleted successfully");
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PutMapping(value = "expenditure/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateWithImage(
             @PathVariable String id,
             @RequestPart("expenditure") String expenditureJson,
-            @RequestPart(value = "image", required = false) MultipartFile image) {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
             Expenditure expenditure = mapper.readValue(expenditureJson, Expenditure.class);
 
-            return expenditureService.update(id, expenditure, image)
+            return expenditureService.update(id, expenditure, images)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
@@ -101,4 +123,6 @@ public class ExpenditureController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    private record ReceiptInfo(Long id, String fileName, String fileType, java.time.LocalDateTime uploadedAt) {}
 }
