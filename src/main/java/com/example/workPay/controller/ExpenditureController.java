@@ -68,6 +68,31 @@ public class ExpenditureController {
                 .body(expenseReceipt.getImageData());
     }
 
+    @PutMapping(value = "expenditure/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateWithImage(
+            @PathVariable String id,
+            @RequestPart("expenditure") String expenditureJson,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            Expenditure expenditure = mapper.readValue(expenditureJson, Expenditure.class);
+
+            return expenditureService.update(id, expenditure, image)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to update expenditure: " + e.getMessage());
+        }
+    }
+
+    @PutMapping(value = "expenditure/update/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> update(@PathVariable String id, @RequestBody Expenditure expenditure) {
+        return expenditureService.update(id, expenditure)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("expenditure/delete")
     public ResponseEntity<?> delete(@RequestParam String id, @RequestParam String expenseType) {
         boolean deleted = expenditureService.deleteByIdAndExpenseType(id, expenseType);

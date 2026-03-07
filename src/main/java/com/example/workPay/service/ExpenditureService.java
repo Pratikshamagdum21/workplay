@@ -71,6 +71,56 @@ public class ExpenditureService {
         return false;
     }
 
+    @Transactional
+    public Optional<Expenditure> update(String id, Expenditure updated, MultipartFile image) throws IOException {
+        Optional<Expenditure> existing = expenditureRepo.findById(id);
+        if (existing.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Expenditure expenditure = existing.get();
+        if (updated.getDate() != null) expenditure.setDate(updated.getDate());
+        if (updated.getExpenseType() != null) expenditure.setExpenseType(updated.getExpenseType());
+        if (updated.getAmount() != null) expenditure.setAmount(updated.getAmount());
+        if (updated.getNote() != null) expenditure.setNote(updated.getNote());
+        if (updated.getBranchId() != null) expenditure.setBranchId(updated.getBranchId());
+
+        Expenditure saved = expenditureRepo.save(expenditure);
+
+        if (image != null && !image.isEmpty()) {
+            byte[] compressedImage = compressImage(image);
+
+            // Replace existing receipt or create new one
+            ExpenseReceipt receipt = expenseReceiptRepository.findByExpenseId(id)
+                    .orElse(ExpenseReceipt.builder().expenseId(id).build());
+
+            receipt.setFileName(image.getOriginalFilename());
+            receipt.setFileType(image.getContentType());
+            receipt.setImageData(compressedImage);
+            receipt.setUploadedAt(java.time.LocalDateTime.now());
+
+            expenseReceiptRepository.save(receipt);
+        }
+
+        return Optional.of(saved);
+    }
+
+    public Optional<Expenditure> update(String id, Expenditure updated) {
+        Optional<Expenditure> existing = expenditureRepo.findById(id);
+        if (existing.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Expenditure expenditure = existing.get();
+        if (updated.getDate() != null) expenditure.setDate(updated.getDate());
+        if (updated.getExpenseType() != null) expenditure.setExpenseType(updated.getExpenseType());
+        if (updated.getAmount() != null) expenditure.setAmount(updated.getAmount());
+        if (updated.getNote() != null) expenditure.setNote(updated.getNote());
+        if (updated.getBranchId() != null) expenditure.setBranchId(updated.getBranchId());
+
+        return Optional.of(expenditureRepo.save(expenditure));
+    }
+
     public Optional<ExpenseReceipt> getReceiptByExpenseId(String expenseId) {
         return expenseReceiptRepository.findByExpenseId(expenseId);
     }
