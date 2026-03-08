@@ -23,14 +23,35 @@ public class ExpenditureController {
     @PostMapping(value = "expenditure/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveWithImage(
             @RequestPart("expenditure") String expenditureJson,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
             Expenditure expenditure = mapper.readValue(expenditureJson, Expenditure.class);
 
-            return expenditureService.save(expenditure, images)
-                    .map(ResponseEntity::ok)
+            // Merge single "image" into "images" list
+            List<MultipartFile> allImages = new java.util.ArrayList<>();
+            if (images != null) {
+                allImages.addAll(images);
+            }
+            if (image != null && !image.isEmpty()) {
+                allImages.add(image);
+            }
+
+            Optional<Expenditure> result = expenditureService.save(expenditure,
+                    allImages.isEmpty() ? null : allImages);
+
+            // Populate receiptIds in the response
+            result.ifPresent(exp -> {
+                List<Long> receiptIds = expenditureService.getReceiptsByExpenseId(exp.getId())
+                        .stream()
+                        .map(ExpenseReceipt::getId)
+                        .toList();
+                exp.setReceiptIds(receiptIds);
+            });
+
+            return result.map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Failed to save expenditure: " + e.getMessage());
@@ -104,14 +125,35 @@ public class ExpenditureController {
     public ResponseEntity<?> updateWithImage(
             @PathVariable String id,
             @RequestPart("expenditure") String expenditureJson,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
             Expenditure expenditure = mapper.readValue(expenditureJson, Expenditure.class);
 
-            return expenditureService.update(id, expenditure, images)
-                    .map(ResponseEntity::ok)
+            // Merge single "image" into "images" list
+            List<MultipartFile> allImages = new java.util.ArrayList<>();
+            if (images != null) {
+                allImages.addAll(images);
+            }
+            if (image != null && !image.isEmpty()) {
+                allImages.add(image);
+            }
+
+            Optional<Expenditure> result = expenditureService.update(id, expenditure,
+                    allImages.isEmpty() ? null : allImages);
+
+            // Populate receiptIds in the response
+            result.ifPresent(exp -> {
+                List<Long> receiptIds = expenditureService.getReceiptsByExpenseId(exp.getId())
+                        .stream()
+                        .map(ExpenseReceipt::getId)
+                        .toList();
+                exp.setReceiptIds(receiptIds);
+            });
+
+            return result.map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Failed to update expenditure: " + e.getMessage());
