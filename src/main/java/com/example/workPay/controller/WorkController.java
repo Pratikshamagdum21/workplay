@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -17,8 +18,10 @@ public class WorkController {
 
     @GetMapping("work/getAllWork")
     public ResponseEntity<List<WorkEntry>> getAllWork(
-            @RequestParam(required = false) Integer branchId) {
-        return ResponseEntity.ok(workEntryService.getAllWork(branchId));
+            @RequestParam(required = false) Integer branchId,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate) {
+        return ResponseEntity.ok(workEntryService.getAllWork(branchId, startDate, endDate));
     }
 
     @PostMapping("work/saveWork")
