@@ -27,7 +27,6 @@ public class ExpenseReceipt {
     @Column(name = "file_type")
     private String fileType;
 
-    @Lob
     @Column(name = "image_data", columnDefinition = "BYTEA")
     private byte[] imageData;
 
