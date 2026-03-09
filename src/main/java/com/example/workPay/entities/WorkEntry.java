@@ -34,6 +34,10 @@ public class WorkEntry {
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
+    @JsonDeserialize(using = FlexibleLocalDateDeserializer.class)
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

@@ -5,6 +5,7 @@ import com.example.workPay.entities.WorkEntry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -15,9 +16,13 @@ public class WorkEntryService {
     @Autowired
     private WorkEntryRepository workEntryRepository;
 
-    public List<WorkEntry> getAllWork(Integer branchId) {
-        if (branchId != null) {
+    public List<WorkEntry> getAllWork(Integer branchId, LocalDate startDate, LocalDate endDate) {
+        if (branchId != null && startDate != null && endDate != null) {
+            return workEntryRepository.findByBranchIdAndDateBetweenOrderByCreatedAtDesc(branchId, startDate, endDate);
+        } else if (branchId != null) {
             return workEntryRepository.findByBranchIdOrderByCreatedAtDesc(branchId);
+        } else if (startDate != null && endDate != null) {
+            return workEntryRepository.findByDateBetweenOrderByCreatedAtDesc(startDate, endDate);
         }
         return workEntryRepository.findAllByOrderByCreatedAtDesc();
     }
