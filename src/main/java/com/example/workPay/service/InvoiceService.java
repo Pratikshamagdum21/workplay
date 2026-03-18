@@ -29,4 +29,12 @@ public class InvoiceService {
     public List<Invoice> getInvoicesByIds(List<Long> ids) {
         return invoiceRepository.findAllById(ids);
     }
+
+    public boolean deleteInvoice(Long id) {
+        if (invoiceRepository.existsById(id)) {
+            invoiceRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
 }

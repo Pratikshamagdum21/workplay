@@ -29,6 +29,13 @@ public class WorkController {
         return ResponseEntity.ok(workEntryService.saveWork(entry));
     }
 
+    @PutMapping("work/updateWork/{id}")
+    public ResponseEntity<WorkEntry> updateWork(@PathVariable String id, @RequestBody WorkEntry entry) {
+        return workEntryService.updateWork(id, entry)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("work/deleteWork")
     public ResponseEntity<?> deleteWork(@RequestParam String id) {
         boolean deleted = workEntryService.deleteWork(id);

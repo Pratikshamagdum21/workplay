@@ -53,6 +53,14 @@ public class InvoiceController {
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteInvoice(@PathVariable Long id) {
+        if (invoiceService.deleteInvoice(id)) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping("/download-bulk")
     public ResponseEntity<byte[]> downloadBulkInvoices(@RequestBody BulkDownloadRequest request) {
         List<Invoice> invoices = invoiceService.getInvoicesByIds(request.getInvoiceIds());
