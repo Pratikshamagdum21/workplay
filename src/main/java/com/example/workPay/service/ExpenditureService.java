@@ -83,6 +83,8 @@ public class ExpenditureService {
 
         Expenditure saved = expenditureRepo.save(expenditure);
 
+        removeDeletedReceipts(id, updated.getReceiptIds());
+
         if (images != null) {
             for (MultipartFile image : images) {
                 if (image != null && !image.isEmpty()) {
@@ -94,6 +96,7 @@ public class ExpenditureService {
         return Optional.of(saved);
     }
 
+    @Transactional
     public Optional<Expenditure> update(String id, Expenditure updated) {
         Optional<Expenditure> existing = expenditureRepo.findById(id);
         if (existing.isEmpty()) {
@@ -106,6 +109,8 @@ public class ExpenditureService {
         if (updated.getAmount() != null) expenditure.setAmount(updated.getAmount());
         if (updated.getNote() != null) expenditure.setNote(updated.getNote());
         if (updated.getBranchId() != null) expenditure.setBranchId(updated.getBranchId());
+
+        removeDeletedReceipts(id, updated.getReceiptIds());
 
         return Optional.of(expenditureRepo.save(expenditure));
     }
@@ -125,6 +130,29 @@ public class ExpenditureService {
             return true;
         }
         return false;
+    }
+
+    private void removeDeletedReceipts(String expenseId, List<Long> incomingReceiptIds) {
+        // null means receiptIds was not provided — don't touch existing receipts
+        if (incomingReceiptIds == null) {
+            return;
+        }
+
+        List<ExpenseReceipt> existingReceipts = expenseReceiptRepository.findByExpenseId(expenseId);
+
+        if (incomingReceiptIds.isEmpty()) {
+            // Empty list means delete all receipts
+            for (ExpenseReceipt receipt : existingReceipts) {
+                expenseReceiptRepository.deleteById(receipt.getId());
+            }
+        } else {
+            // Delete receipts that are in DB but not in the incoming list
+            for (ExpenseReceipt receipt : existingReceipts) {
+                if (!incomingReceiptIds.contains(receipt.getId())) {
+                    expenseReceiptRepository.deleteById(receipt.getId());
+                }
+            }
+        }
     }
 
     private void saveReceipt(String expenseId, MultipartFile image) throws IOException {
