@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,6 +34,18 @@ public class WorkEntryService {
             return true;
         }
         return false;
+    }
+
+    public Optional<WorkEntry> updateWork(String id, WorkEntry updatedEntry) {
+        return workEntryRepository.findById(id).map(existing -> {
+            existing.setEmployeeName(updatedEntry.getEmployeeName());
+            existing.setEmployeeType(updatedEntry.getEmployeeType());
+            existing.setFabricMeters(updatedEntry.getFabricMeters());
+            existing.setDate(updatedEntry.getDate());
+            existing.setEndDate(updatedEntry.getEndDate());
+            existing.setBranchId(updatedEntry.getBranchId());
+            return workEntryRepository.save(existing);
+        });
     }
 
     public WorkEntry saveWork(WorkEntry entry) {
