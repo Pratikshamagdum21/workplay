@@ -1,6 +1,7 @@
 package com.example.workPay.controller;
 
 
+import com.example.workPay.dto.YearlyDataMigrationRequest;
 import com.example.workPay.entities.Employee;
 import com.example.workPay.entities.SalaryType;
 import com.example.workPay.service.EmployeeService;
@@ -85,5 +86,11 @@ public class EmployeeController {
     @PostMapping("emp/findHistByIdAndDate")
     ResponseEntity<?> findHistByIdAndDate(Integer id, LocalDate targetDate){
         return ResponseEntity.ok(employeeService.findHistByIdAndDate(id, targetDate));
+    }
+
+    @PostMapping("/emp/migrateYearlyData")
+    ResponseEntity<Map<String, Object>> migrateYearlyData(@RequestBody YearlyDataMigrationRequest request) {
+        Map<String, Object> result = employeeService.migrateYearlyData(request.getEmployees());
+        return ResponseEntity.ok(result);
     }
 }

@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import com.example.workPay.dto.YearlyDataMigrationRequest.EmployeeYearlyData;
+
 import java.time.LocalDate;
 import java.util.*;
 
@@ -164,5 +166,63 @@ public class EmployeeService {
     public List<EmployeeHistory> findHistByIdAndDate(Integer id, LocalDate targetDate) {
         return empHistory.findByEmployeeIdAndDate(id, targetDate)
                 .orElseThrow(() -> new ErrorResponse("402", "Employee not found in History"));
+    }
+
+    @Transactional
+    public Map<String, Object> migrateYearlyData(List<EmployeeYearlyData> employeesData) {
+        List<Map<String, Object>> updated = new ArrayList<>();
+        List<Map<String, Object>> skipped = new ArrayList<>();
+
+        for (EmployeeYearlyData data : employeesData) {
+            Optional<Employee> optEmployee = empRepo.findById(data.getEmployeeId());
+
+            if (optEmployee.isEmpty()) {
+                skipped.add(Map.of(
+                        "employeeId", data.getEmployeeId(),
+                        "reason", "Employee not found"
+                ));
+                continue;
+            }
+
+            Employee employee = optEmployee.get();
+
+            if (employee.getSalaryType() != SalaryType.MONTHLY) {
+                skipped.add(Map.of(
+                        "employeeId", data.getEmployeeId(),
+                        "reason", "Not a fixed (MONTHLY) employee"
+                ));
+                continue;
+            }
+
+            if (data.getSalary() != null) {
+                employee.setSalary(data.getSalary());
+            }
+            if (data.getAdvanceAmount() != null) {
+                employee.setAdvanceAmount(data.getAdvanceAmount());
+            }
+            if (data.getAdvanceRemaining() != null) {
+                employee.setAdvanceRemaining(data.getAdvanceRemaining());
+            }
+
+            empRepo.save(employee);
+
+            EmployeeHistory history = new EmployeeHistory();
+            history.setDate(LocalDate.now());
+            history.setNote("Yearly data migration");
+            history.copyDataFromEmployee(employee);
+            empHistory.save(history);
+
+            updated.add(Map.of(
+                    "employeeId", employee.getId(),
+                    "name", employee.getName()
+            ));
+        }
+
+        return Map.of(
+                "updatedCount", updated.size(),
+                "skippedCount", skipped.size(),
+                "updated", updated,
+                "skipped", skipped
+        );
     }
 }
