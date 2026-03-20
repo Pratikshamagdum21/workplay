@@ -1,18 +1,25 @@
 package com.example.workPay.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DatabaseMigration implements CommandLineRunner {
+@Lazy
+public class DatabaseMigration {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Override
-    public void run(String... args) {
+    /**
+     * These migrations are idempotent and the schema is already stable.
+     * No longer runs on every startup — this prevents waking Neon compute
+     * during Render's health-ping restart cycles.
+     *
+     * To run manually if needed: call POST /admin/run-migrations
+     */
+    public void migrate() {
         jdbcTemplate.execute(
             "ALTER TABLE public.work_entry ALTER COLUMN shift DROP NOT NULL"
         );
@@ -20,7 +27,6 @@ public class DatabaseMigration implements CommandLineRunner {
     }
 
     private void migrateExpenditureTable() {
-        // Add id column if it doesn't exist
         jdbcTemplate.execute(
             "DO $$ BEGIN " +
             "IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='Expenditure' AND column_name='id') THEN " +
@@ -28,12 +34,10 @@ public class DatabaseMigration implements CommandLineRunner {
             "END IF; END $$"
         );
 
-        // Populate existing rows with generated ids
         jdbcTemplate.execute(
             "UPDATE public.\"Expenditure\" SET \"id\" = gen_random_uuid()::text WHERE \"id\" IS NULL"
         );
 
-        // Drop any existing primary key constraint on the table
         jdbcTemplate.execute(
             "DO $$ " +
             "DECLARE pk_name TEXT; " +
@@ -46,7 +50,6 @@ public class DatabaseMigration implements CommandLineRunner {
             "END $$"
         );
 
-        // Set id as NOT NULL and add as primary key
         jdbcTemplate.execute(
             "ALTER TABLE public.\"Expenditure\" ALTER COLUMN \"id\" SET NOT NULL"
         );
@@ -54,7 +57,6 @@ public class DatabaseMigration implements CommandLineRunner {
             "ALTER TABLE public.\"Expenditure\" ADD PRIMARY KEY (\"id\")"
         );
 
-        // Add branchId column if it doesn't exist
         jdbcTemplate.execute(
             "DO $$ BEGIN " +
             "IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='Expenditure' AND column_name='branchId') THEN " +
