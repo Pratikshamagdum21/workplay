@@ -116,6 +116,41 @@ public class DatabaseBackupService {
         }
     }
 
+    /**
+     * Checks whether any backup DB file exists in the backup directory.
+     * A valid backup file matches the pattern backup_*.sql.
+     *
+     * @return true if at least one backup file exists, false otherwise
+     */
+    public boolean isBackupFileCreated() {
+        Path backupDir = Paths.get(backupDirectory);
+        if (!Files.exists(backupDir)) {
+            return false;
+        }
+        File[] backupFiles = backupDir.toFile().listFiles(
+                (dir, name) -> name.startsWith("backup_") && name.endsWith(".sql")
+        );
+        return backupFiles != null && backupFiles.length > 0;
+    }
+
+    /**
+     * Checks whether a specific backup file exists by filename.
+     *
+     * @param filename the backup filename to check (e.g. backup_20260321_173500.sql)
+     * @return true if the file exists in the backup directory
+     */
+    public boolean isBackupFileCreated(String filename) {
+        Path backupFile = Paths.get(backupDirectory).resolve(filename);
+        return Files.exists(backupFile) && Files.isRegularFile(backupFile);
+    }
+
+    /**
+     * Returns the path to the backup directory.
+     */
+    public String getBackupDirectory() {
+        return backupDirectory;
+    }
+
     private String getRequiredEnv(String name) {
         String value = System.getenv(name);
         if (value == null || value.isBlank()) {
