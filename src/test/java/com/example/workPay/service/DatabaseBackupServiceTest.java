@@ -4,13 +4,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class DatabaseBackupServiceTest {
 
@@ -26,6 +27,11 @@ class DatabaseBackupServiceTest {
         Field backupDirField = DatabaseBackupService.class.getDeclaredField("backupDirectory");
         backupDirField.setAccessible(true);
         backupDirField.set(backupService, tempDir.toString());
+
+        // Inject a mock DataSource (not used by isBackupFileCreated methods)
+        Field dataSourceField = DatabaseBackupService.class.getDeclaredField("dataSource");
+        dataSourceField.setAccessible(true);
+        dataSourceField.set(backupService, mock(DataSource.class));
     }
 
     @Test

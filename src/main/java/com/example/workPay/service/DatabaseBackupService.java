@@ -2,25 +2,34 @@ package com.example.workPay.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class DatabaseBackupService {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseBackupService.class);
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+
+    @Autowired
+    private DataSource dataSource;
 
     @Value("${backup.directory:backups}")
     private String backupDirectory;
@@ -42,58 +51,147 @@ public class DatabaseBackupService {
     }
 
     private boolean executeBackup() {
-        try {
-            String dbHost = getRequiredEnv("BACKUP_DB_HOST");
-            String dbPort = getEnvOrDefault("BACKUP_DB_PORT", "5432");
-            String dbName = getRequiredEnv("BACKUP_DB_NAME");
-            String dbUser = getRequiredEnv("BACKUP_DB_USER");
-            String dbPassword = getRequiredEnv("BACKUP_DB_PASSWORD");
+        Path backupDir = Paths.get(backupDirectory);
+        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
+        String filename = String.format("backup_%s.sql", timestamp);
+        Path backupFile = backupDir.resolve(filename);
 
-            Path backupDir = Paths.get(backupDirectory);
+        try {
             Files.createDirectories(backupDir);
 
-            String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
-            String filename = String.format("backup_%s.sql", timestamp);
-            Path backupFile = backupDir.resolve(filename);
+            try (Connection conn = dataSource.getConnection();
+                 BufferedWriter writer = Files.newBufferedWriter(backupFile)) {
 
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                    "pg_dump",
-                    "--host=" + dbHost,
-                    "--port=" + dbPort,
-                    "--username=" + dbUser,
-                    "--dbname=" + dbName,
-                    "--format=custom",
-                    "--file=" + backupFile.toAbsolutePath()
-            );
+                writer.write("-- Database backup created at " + LocalDateTime.now());
+                writer.newLine();
+                writer.newLine();
 
-            processBuilder.environment().put("PGPASSWORD", dbPassword);
-            processBuilder.redirectErrorStream(true);
+                List<String> tables = getTableNames(conn);
+                logger.info("Found {} tables to back up", tables.size());
 
-            logger.info("Executing pg_dump to {}", backupFile.getFileName());
-
-            Process process = processBuilder.start();
-            String output = new String(process.getInputStream().readAllBytes());
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                logger.error("pg_dump failed with exit code {}. Output: {}", exitCode, output);
-                Files.deleteIfExists(backupFile);
-                return false;
+                for (String table : tables) {
+                    exportTable(conn, table, writer);
+                }
             }
 
             long fileSizeKb = Files.size(backupFile) / 1024;
             logger.info("Database backup completed successfully: {} ({}KB)", filename, fileSizeKb);
 
             cleanupOldBackups(backupDir);
-
             return true;
-        } catch (IOException | InterruptedException e) {
-            logger.error("Database backup failed with exception: {}", e.getMessage(), e);
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
+
+        } catch (SQLException | IOException e) {
+            logger.error("Database backup failed: {}", e.getMessage(), e);
+            try {
+                Files.deleteIfExists(backupFile);
+            } catch (IOException deleteEx) {
+                logger.warn("Failed to delete incomplete backup file: {}", deleteEx.getMessage());
             }
             return false;
         }
+    }
+
+    private List<String> getTableNames(Connection conn) throws SQLException {
+        List<String> tables = new ArrayList<>();
+        DatabaseMetaData metaData = conn.getMetaData();
+        try (ResultSet rs = metaData.getTables(null, "public", null, new String[]{"TABLE"})) {
+            while (rs.next()) {
+                tables.add(rs.getString("TABLE_NAME"));
+            }
+        }
+        return tables;
+    }
+
+    private void exportTable(Connection conn, String table, BufferedWriter writer)
+            throws SQLException, IOException {
+        // Quote the table name to handle case-sensitive and reserved-word names
+        String quotedTable = "\"" + table + "\"";
+        writer.write("-- Table: " + table);
+        writer.newLine();
+
+        // Get column names and types
+        List<String> columns = new ArrayList<>();
+        List<Integer> columnTypes = new ArrayList<>();
+        try (ResultSet rs = conn.getMetaData().getColumns(null, "public", table, null)) {
+            while (rs.next()) {
+                columns.add(rs.getString("COLUMN_NAME"));
+                columnTypes.add(rs.getInt("DATA_TYPE"));
+            }
+        }
+
+        if (columns.isEmpty()) {
+            writer.newLine();
+            return;
+        }
+
+        // Export rows as INSERT statements
+        String selectSql = "SELECT * FROM " + quotedTable;
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(selectSql)) {
+
+            int rowCount = 0;
+            while (rs.next()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("INSERT INTO ").append(quotedTable).append(" (");
+
+                for (int i = 0; i < columns.size(); i++) {
+                    if (i > 0) sb.append(", ");
+                    sb.append("\"").append(columns.get(i)).append("\"");
+                }
+                sb.append(") VALUES (");
+
+                for (int i = 0; i < columns.size(); i++) {
+                    if (i > 0) sb.append(", ");
+                    sb.append(formatValue(rs, i + 1, columnTypes.get(i)));
+                }
+                sb.append(");");
+
+                writer.write(sb.toString());
+                writer.newLine();
+                rowCount++;
+            }
+            logger.info("Exported {} rows from table {}", rowCount, table);
+        }
+        writer.newLine();
+    }
+
+    private String formatValue(ResultSet rs, int columnIndex, int sqlType) throws SQLException {
+        Object value = rs.getObject(columnIndex);
+        if (value == null) {
+            return "NULL";
+        }
+
+        switch (sqlType) {
+            case Types.SMALLINT:
+            case Types.INTEGER:
+            case Types.BIGINT:
+            case Types.FLOAT:
+            case Types.DOUBLE:
+            case Types.DECIMAL:
+            case Types.NUMERIC:
+                return value.toString();
+            case Types.BOOLEAN:
+            case Types.BIT:
+                return Boolean.TRUE.equals(rs.getBoolean(columnIndex)) ? "TRUE" : "FALSE";
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
+                byte[] bytes = rs.getBytes(columnIndex);
+                return "E'\\\\x" + bytesToHex(bytes) + "'";
+            default:
+                // Strings, dates, timestamps, etc. — escape single quotes
+                String strVal = value.toString();
+                strVal = strVal.replace("'", "''");
+                return "'" + strVal + "'";
+        }
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder hex = new StringBuilder();
+        for (byte b : bytes) {
+            hex.append(String.format("%02x", b));
+        }
+        return hex.toString();
     }
 
     private void cleanupOldBackups(Path backupDir) {
@@ -149,18 +247,5 @@ public class DatabaseBackupService {
      */
     public String getBackupDirectory() {
         return backupDirectory;
-    }
-
-    private String getRequiredEnv(String name) {
-        String value = System.getenv(name);
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException("Required environment variable not set: " + name);
-        }
-        return value;
-    }
-
-    private String getEnvOrDefault(String name, String defaultValue) {
-        String value = System.getenv(name);
-        return (value != null && !value.isBlank()) ? value : defaultValue;
     }
 }
