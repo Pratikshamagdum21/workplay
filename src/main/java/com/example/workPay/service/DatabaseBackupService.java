@@ -11,6 +11,10 @@ import javax.sql.DataSource;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 
@@ -76,6 +81,8 @@ public class DatabaseBackupService {
 
             long fileSizeKb = Files.size(backupFile) / 1024;
             logger.info("Database backup completed successfully: {} ({}KB)", filename, fileSizeKb);
+
+            uploadToGitHub(backupFile, filename);
 
             cleanupOldBackups(backupDir);
             return true;
@@ -192,6 +199,47 @@ public class DatabaseBackupService {
             hex.append(String.format("%02x", b));
         }
         return hex.toString();
+    }
+
+    private void uploadToGitHub(Path backupFile, String filename) {
+        String token = System.getenv("GITHUB_BACKUP_TOKEN");
+        String repo = System.getenv("GITHUB_BACKUP_REPO");
+
+        if (token == null || token.isBlank() || repo == null || repo.isBlank()) {
+            logger.warn("GitHub backup upload skipped — GITHUB_BACKUP_TOKEN or GITHUB_BACKUP_REPO not set");
+            return;
+        }
+
+        try {
+            byte[] fileBytes = Files.readAllBytes(backupFile);
+            String base64Content = Base64.getEncoder().encodeToString(fileBytes);
+
+            String jsonBody = "{\"message\":\"Backup " + filename + "\","
+                    + "\"content\":\"" + base64Content + "\"}";
+
+            String apiUrl = "https://api.github.com/repos/" + repo + "/contents/" + filename;
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Authorization", "Bearer " + token)
+                    .header("Accept", "application/vnd.github+json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 201) {
+                logger.info("Backup uploaded to GitHub successfully: {}", filename);
+            } else {
+                logger.error("GitHub upload failed (HTTP {}): {}", response.statusCode(), response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            logger.error("GitHub upload failed: {}", e.getMessage(), e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private void cleanupOldBackups(Path backupDir) {
