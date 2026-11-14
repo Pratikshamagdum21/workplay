@@ -58,6 +58,15 @@ public class DatabaseMigration {
         );
 
         jdbcTemplate.execute(
+                "ALTER TABLE public.\"invoices\" ADD COLUMN \"customer_id\" VARCHAR(255); BEGIN NULL"
+        );
+        
+
+        jdbcTemplate.execute(
+                "ALTER TABLE public.\"invoices\" ADD COLUMN (\"quality_id\"  VARCHAR(255); BEGIN NULL)"
+        );
+
+        jdbcTemplate.execute(
             "DO $$ BEGIN " +
             "IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='Expenditure' AND column_name='branchId') THEN " +
             "ALTER TABLE public.\"Expenditure\" ADD COLUMN \"branchId\" INTEGER; " +
