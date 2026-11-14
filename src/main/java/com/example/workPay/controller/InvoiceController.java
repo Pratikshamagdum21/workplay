@@ -2,6 +2,7 @@ package com.example.workPay.controller;
 
 import com.example.workPay.dto.BulkDownloadRequest;
 import com.example.workPay.entities.BusinessInfo;
+import com.example.workPay.entities.Employee;
 import com.example.workPay.entities.Invoice;
 import com.example.workPay.service.BusinessInfoService;
 import com.example.workPay.service.InvoicePdfService;
@@ -33,9 +34,27 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.createInvoice(invoice));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Invoice> updateInvoice(@PathVariable Long id, @RequestBody Invoice invoice) {
+        Invoice updated = invoiceService.updateInvoice(id, invoice);
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updated);
+    }
+
     @GetMapping
     public ResponseEntity<List<Invoice>> getAllInvoices() {
         return ResponseEntity.ok(invoiceService.getAllInvoices());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Invoice> getInvoiceById(@PathVariable Long id) {
+        Invoice invoice = invoiceService.getInvoiceById(id);
+        if (invoice == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(invoice);
     }
 
     @GetMapping("/{id}/download")

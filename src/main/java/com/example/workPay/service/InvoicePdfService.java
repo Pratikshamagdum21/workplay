@@ -10,10 +10,12 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
+import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Div;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.HorizontalAlignment;
+import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
@@ -30,68 +32,51 @@ public class InvoicePdfService {
     private static final DeviceRgb SECTION_BG = new DeviceRgb(236, 240, 241);
     private static final DeviceRgb ACCENT_COLOR = new DeviceRgb(41, 128, 185);
     private static final float FONT_SIZE_TITLE = 14f;
-    private static final float FONT_SIZE_SECTION = 9f;
-    private static final float FONT_SIZE_NORMAL = 8f;
-    private static final float FONT_SIZE_SMALL = 7f;
+    private static final float FONT_SIZE_SECTION = 10f;
+    private static final float FONT_SIZE_NORMAL = 9f;
+    private static final float FONT_SIZE_SMALL = 8f;
 
     public byte[] generateSingleInvoicePdf(Invoice invoice, BusinessInfo business) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
-        // F4 page size: 210mm x 330mm
-        PageSize f4 = new PageSize(210 * 72 / 25.4f, 330 * 72 / 25.4f);
         PdfDocument pdfDoc = new PdfDocument(writer);
-        pdfDoc.setDefaultPageSize(f4);
-        Document document = new Document(pdfDoc, f4);
+        pdfDoc.setDefaultPageSize(PageSize.A4);
+        Document document = new Document(pdfDoc, PageSize.A4);
         document.setMargins(15, 20, 15, 20);
 
-        addInvoiceContent(document, invoice, business, f4.getWidth() - 40);
+        Div invoiceDiv = new Div();
+        addInvoiceContent(invoiceDiv, invoice, business, PageSize.A4.getWidth() - 40);
+        document.add(invoiceDiv);
 
         document.close();
         return baos.toByteArray();
     }
-
     public byte[] generateBulkInvoicePdf(List<Invoice> invoices, BusinessInfo business) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
-        // F4 page size: 210mm x 330mm
-        PageSize f4 = new PageSize(210 * 72 / 25.4f, 330 * 72 / 25.4f);
         PdfDocument pdfDoc = new PdfDocument(writer);
-        pdfDoc.setDefaultPageSize(f4);
-        Document document = new Document(pdfDoc, f4);
+        pdfDoc.setDefaultPageSize(PageSize.A4);
+        Document document = new Document(pdfDoc, PageSize.A4);
         document.setMargins(15, 20, 15, 20);
 
-        float contentWidth = f4.getWidth() - 40;
+        float contentWidth = PageSize.A4.getWidth() - 40;
+        int total = invoices.size();
 
-        for (int i = 0; i < invoices.size(); i++) {
-            if (i > 0) {
-                // Separator line at top of new page
-                Table separator = new Table(1).useAllAvailableWidth();
-                separator.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setHeight(1)
-                        .setBorderTop(new SolidBorder(ColorConstants.DARK_GRAY, 1f))
-                        .setBorderBottom(Border.NO_BORDER)
-                        .setBorderLeft(Border.NO_BORDER)
-                        .setBorderRight(Border.NO_BORDER)
-                        .setMarginBottom(5));
-                document.add(separator);
+        for (int i = 0; i < total; i += 2) {
+            Div slot1 = new Div();
+            addCompactInvoiceContent(slot1, invoices.get(i), business, contentWidth);
+            document.add(slot1);
+
+            if (i + 1 < total) {
+                addSeparator(document, 8, 8);
+                Div slot2 = new Div();
+                addCompactInvoiceContent(slot2, invoices.get(i + 1), business, contentWidth);
+                document.add(slot2);
             }
 
-            addInvoiceContent(document, invoices.get(i), business, contentWidth);
-
-            if (i < invoices.size() - 1) {
-                // Separator line at bottom before page break
-                Table separator = new Table(1).useAllAvailableWidth();
-                separator.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setHeight(1)
-                        .setBorderBottom(new SolidBorder(ColorConstants.DARK_GRAY, 1f))
-                        .setBorderTop(Border.NO_BORDER)
-                        .setBorderLeft(Border.NO_BORDER)
-                        .setBorderRight(Border.NO_BORDER)
-                        .setMarginTop(5));
-                document.add(separator);
-                pdfDoc.addNewPage();
+            boolean moreInvoicesRemain = (i + 2) < total;
+            if (moreInvoicesRemain) {
+                document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             }
         }
 
@@ -99,7 +84,21 @@ public class InvoicePdfService {
         return baos.toByteArray();
     }
 
-    private void addInvoiceContent(Document document, Invoice invoice, BusinessInfo business, float width) {
+    private void addSeparator(Document document, float marginTop, float marginBottom) {
+        Table separator = new Table(1).useAllAvailableWidth();
+        separator.addCell(new Cell()
+                .add(new Paragraph(""))
+                .setHeight(1)
+                .setBorderTop(new SolidBorder(ColorConstants.DARK_GRAY, 1f))
+                .setBorderBottom(Border.NO_BORDER)
+                .setBorderLeft(Border.NO_BORDER)
+                .setBorderRight(Border.NO_BORDER)
+                .setMarginTop(marginTop)
+                .setMarginBottom(marginBottom));
+        document.add(separator);
+    }
+
+    private void addInvoiceContent(Div container, Invoice invoice, BusinessInfo business, float width) {
         // === HEADER: Tax Invoice Title ===
         Table headerTable = new Table(1).useAllAvailableWidth();
         headerTable.addCell(new Cell()
@@ -111,7 +110,7 @@ public class InvoicePdfService {
                 .setBackgroundColor(HEADER_BG)
                 .setPadding(5)
                 .setBorder(Border.NO_BORDER));
-        document.add(headerTable);
+        container.add(headerTable);
 
         // === BUSINESS INFO SECTION ===
         if (business != null) {
@@ -127,13 +126,12 @@ public class InvoicePdfService {
                             .setFontSize(FONT_SIZE_NORMAL).setTextAlignment(TextAlignment.CENTER))
                     .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f))
                     .setPaddingTop(4).setPaddingBottom(4));
-            document.add(bizTable);
+            container.add(bizTable);
         }
 
         // === INVOICE INFO & CUSTOMER INFO (side by side) ===
         Table infoTable = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
 
-        // Left: Invoice details
         Cell invoiceCell = new Cell()
                 .add(new Paragraph("Invoice Details").setFontSize(FONT_SIZE_SECTION).setBold()
                         .setFontColor(ACCENT_COLOR))
@@ -145,7 +143,6 @@ public class InvoicePdfService {
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f));
         infoTable.addCell(invoiceCell);
 
-        // Right: Customer details
         Cell customerCell = new Cell()
                 .add(new Paragraph("Bill To").setFontSize(FONT_SIZE_SECTION).setBold()
                         .setFontColor(ACCENT_COLOR))
@@ -163,16 +160,16 @@ public class InvoicePdfService {
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f));
         infoTable.addCell(customerCell);
 
-        document.add(infoTable);
+        container.add(infoTable);
 
         // === FABRIC QUALITY DETAILS TABLE ===
-        document.add(new Paragraph("Fabric Quality Details")
+        container.add(new Paragraph("Fabric Quality Details")
                 .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
                 .setMarginTop(4).setMarginBottom(2));
 
         Table qualityTable = new Table(UnitValue.createPercentArray(new float[]{25, 15, 15, 15, 15, 15}))
                 .useAllAvailableWidth();
-        addTableHeader(qualityTable, "Quality Name", "Width", "Fani", "Peak", "Warp", "Weft");
+        addTableHeader(qualityTable, "Quality Name", "Width", "Reed", "Peak", "Warp", "Weft");
         addTableRow(qualityTable,
                 safe(invoice.getQualityName()),
                 safe(invoice.getWidth()),
@@ -180,10 +177,10 @@ public class InvoicePdfService {
                 safe(invoice.getPeak()),
                 safe(invoice.getWarp()),
                 safe(invoice.getWeft()));
-        document.add(qualityTable);
+        container.add(qualityTable);
 
         // === QUANTITY & RATE TABLE ===
-        document.add(new Paragraph("Quantity & Rate")
+        container.add(new Paragraph("Quantity & Rate")
                 .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
                 .setMarginTop(4).setMarginBottom(2));
 
@@ -195,10 +192,15 @@ public class InvoicePdfService {
                 String.format("%.2f", invoice.getMeters() != null ? invoice.getMeters() : 0.0),
                 String.format("%.2f", invoice.getRate() != null ? invoice.getRate() : 0.0),
                 String.format("%.2f", invoice.getTotalAmount() != null ? invoice.getTotalAmount() : 0.0));
-        document.add(qtyTable);
+        container.add(qtyTable);
 
-        // === AMOUNT SUMMARY ===
-        document.add(new Paragraph("Amount Summary")
+        // === AMOUNT SUMMARY (grouped with the words/footer below so an overflow,
+        //     if it happens, forces a break BEFORE this section instead of mid-table
+        //     at the Net Payable row) ===
+        Div summaryGroup = new Div();
+        summaryGroup.setKeepTogether(true);
+
+        summaryGroup.add(new Paragraph("Amount Summary")
                 .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
                 .setMarginTop(4).setMarginBottom(2));
 
@@ -209,7 +211,6 @@ public class InvoicePdfService {
         addAmountRow(amountTable, "CGST", formatAmount(invoice.getCgstAmount()));
         addAmountRow(amountTable, "SGST", formatAmount(invoice.getSgstAmount()));
 
-        // Net payable highlight row
         Cell labelCell = new Cell()
                 .add(new Paragraph("Net Payable").setFontSize(FONT_SIZE_SECTION).setBold()
                         .setFontColor(HEADER_TEXT))
@@ -227,7 +228,7 @@ public class InvoicePdfService {
         amountTable.addCell(labelCell);
         amountTable.addCell(valueCell);
 
-        document.add(amountTable);
+        summaryGroup.add(amountTable);
 
         // === AMOUNT IN WORDS ===
         Table wordsTable = new Table(1).useAllAvailableWidth();
@@ -237,7 +238,7 @@ public class InvoicePdfService {
                 .setBackgroundColor(SECTION_BG)
                 .setPadding(4)
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f)));
-        document.add(wordsTable);
+        summaryGroup.add(wordsTable);
 
         // === FOOTER ===
         Table footerTable = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
@@ -255,14 +256,16 @@ public class InvoicePdfService {
                         .setFontSize(FONT_SIZE_SMALL).setTextAlignment(TextAlignment.RIGHT))
                 .setPadding(4)
                 .setBorder(Border.NO_BORDER));
-        document.add(footerTable);
+        summaryGroup.add(footerTable);
+
+        container.add(summaryGroup);
     }
 
-    private void addCompactInvoiceContent(Document document, Invoice invoice, BusinessInfo business,
-                                           float width, float maxHeight) {
-        // Compact version for bulk (2 per page) - smaller fonts, less padding
-        float sizeReduce = 1f;
-
+    /**
+     * Compact renderer used for bulk PDFs — sized so two of these plus one
+     * separator fit inside a single A4 page with the 15/20/15/20 margins set above.
+     */
+    private void addCompactInvoiceContent(Div container, Invoice invoice, BusinessInfo business, float width) {
         // === HEADER ===
         Table headerTable = new Table(1).useAllAvailableWidth();
         headerTable.addCell(new Cell()
@@ -274,21 +277,21 @@ public class InvoicePdfService {
                 .setBackgroundColor(HEADER_BG)
                 .setPadding(4)
                 .setBorder(Border.NO_BORDER));
-        document.add(headerTable);
+        container.add(headerTable);
 
         // === BUSINESS INFO ===
         if (business != null) {
             Table bizTable = new Table(1).useAllAvailableWidth();
             bizTable.addCell(new Cell()
                     .add(new Paragraph(safe(business.getBusinessName()))
-                            .setFontSize(9).setBold().setTextAlignment(TextAlignment.CENTER)
+                            .setFontSize(13).setBold().setTextAlignment(TextAlignment.CENTER)
                             .setFontColor(ACCENT_COLOR))
                     .add(new Paragraph(safe(business.getAddress()) + "  |  GSTIN: " + safe(business.getGstin())
                             + "  |  Ph: " + safe(business.getPhoneNumber()))
                             .setFontSize(FONT_SIZE_SMALL).setTextAlignment(TextAlignment.CENTER))
                     .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f))
                     .setPaddingTop(3).setPaddingBottom(3));
-            document.add(bizTable);
+            container.add(bizTable);
         }
 
         // === INVOICE + CUSTOMER INFO ===
@@ -304,24 +307,32 @@ public class InvoicePdfService {
 
         Cell customerCell = new Cell()
                 .add(new Paragraph("To: " + safe(invoice.getCustomerName()))
-                        .setFontSize(FONT_SIZE_SMALL).setBold())
-                .add(new Paragraph(safe(invoice.getCustomerAddress()) + " | GSTIN: " + safe(invoice.getCustomerGstin()))
+                        .setFontSize(FONT_SIZE_SMALL).setBold().setCharacterSpacing(1f))
+                .add(new Paragraph(safe(invoice.getCustomerAddress()) + " | State: " + safe(invoice.getCustomerState()))
+                        .setFontSize(FONT_SIZE_SMALL))
+                .add(new Paragraph("GSTIN: " + safe(invoice.getCustomerGstin()))
                         .setFontSize(FONT_SIZE_SMALL))
                 .setPadding(3)
                 .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 0.5f));
         infoTable.addCell(customerCell);
-        document.add(infoTable);
+        container.add(infoTable);
 
         // === FABRIC QUALITY TABLE ===
+        container.add(new Paragraph("Fabric Quality Details")
+                .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
+                .setMarginTop(4).setMarginBottom(2));
         Table qualityTable = new Table(UnitValue.createPercentArray(new float[]{25, 15, 15, 15, 15, 15}))
                 .useAllAvailableWidth();
-        addCompactTableHeader(qualityTable, "Quality", "Width", "Fani", "Peak", "Warp", "Weft");
+        addCompactTableHeader(qualityTable, "Quality", "Width", "Reed", "Peak", "Warp", "Weft");
         addCompactTableRow(qualityTable,
                 safe(invoice.getQualityName()), safe(invoice.getWidth()), safe(invoice.getFani()),
                 safe(invoice.getPeak()), safe(invoice.getWarp()), safe(invoice.getWeft()));
-        document.add(qualityTable);
+        container.add(qualityTable);
 
         // === QUANTITY TABLE ===
+        container.add(new Paragraph("Quantity & Rate")
+                .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
+                .setMarginTop(4).setMarginBottom(2));
         Table qtyTable = new Table(UnitValue.createPercentArray(new float[]{15, 17, 17, 17, 17, 17}))
                 .useAllAvailableWidth();
         addCompactTableHeader(qtyTable, "Sr.", "Rolls", "Meters", "Rate", "Amount", "");
@@ -331,15 +342,17 @@ public class InvoicePdfService {
         qtyTable.addCell(createCompactCell(String.format("%.2f", invoice.getRate() != null ? invoice.getRate() : 0.0), TextAlignment.RIGHT));
         qtyTable.addCell(createCompactCell(String.format("%.2f", invoice.getTotalAmount() != null ? invoice.getTotalAmount() : 0.0), TextAlignment.RIGHT));
         qtyTable.addCell(createCompactCell("", TextAlignment.CENTER));
-        document.add(qtyTable);
+        container.add(qtyTable);
 
         // === AMOUNT SUMMARY (compact) ===
+        container.add(new Paragraph("Amount Summary")
+                .setFontSize(FONT_SIZE_SECTION).setBold().setFontColor(ACCENT_COLOR)
+                .setMarginTop(4).setMarginBottom(2));
         Table amountTable = new Table(UnitValue.createPercentArray(new float[]{50, 25, 25}))
                 .useAllAvailableWidth();
 
-        // Amount in words on left, amounts on right
         Cell wordsCell = new Cell(4, 1)
-                .add(new Paragraph("In Words: " + safe(invoice.getAmountInWords()))
+                .add(new Paragraph("Amount In Words: " + safe(invoice.getAmountInWords()))
                         .setFontSize(FONT_SIZE_SMALL).setItalic())
                 .setBackgroundColor(SECTION_BG)
                 .setPadding(3)
@@ -361,18 +374,24 @@ public class InvoicePdfService {
                 .setBorder(Border.NO_BORDER);
         amountTable.addCell(netLabel);
         amountTable.addCell(netValue);
-        document.add(amountTable);
+        container.add(amountTable);
 
-        // === FOOTER ===
-        Table footerTable = new Table(UnitValue.createPercentArray(new float[]{60, 40})).useAllAvailableWidth();
+        // === FOOTER: same Terms & Conditions / Authorized Signatory structure as the full invoice ===
+        Table footerTable = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
         footerTable.addCell(new Cell()
-                .add(new Paragraph("E. & O.E.").setFontSize(5))
-                .setPadding(2).setBorder(Border.NO_BORDER));
+                .add(new Paragraph("Terms & Conditions:")
+                        .setFontSize(FONT_SIZE_SMALL).setBold())
+                .add(new Paragraph("1. Goods once sold will not be taken back.\n2. Subject to local jurisdiction.")
+                        .setFontSize(FONT_SIZE_SMALL))
+                .setPadding(2)
+                .setBorder(Border.NO_BORDER));
         footerTable.addCell(new Cell()
-                .add(new Paragraph("Authorized Signatory").setFontSize(FONT_SIZE_SMALL)
-                        .setTextAlignment(TextAlignment.RIGHT))
+                .add(new Paragraph("For " + (business != null ? safe(business.getBusinessName()) : ""))
+                        .setFontSize(FONT_SIZE_SMALL).setBold().setTextAlignment(TextAlignment.RIGHT))
+                .add(new Paragraph("\nAuthorized Signatory")
+                        .setFontSize(FONT_SIZE_SMALL).setTextAlignment(TextAlignment.RIGHT))
                 .setPadding(2).setBorder(Border.NO_BORDER));
-        document.add(footerTable);
+        container.add(footerTable);
     }
 
     // === Helper methods ===

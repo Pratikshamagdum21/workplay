@@ -24,6 +24,9 @@ public class Invoice {
 
     @Column(name = "customer_name")
     private String customerName;
+//
+//    @Column(name = "customer_id")
+//    private String customerId;
 
     @Column(name = "customer_address")
     private String customerAddress;
@@ -39,6 +42,9 @@ public class Invoice {
 
     @Column(name = "quality_name")
     private String qualityName;
+
+//    @Column(name = "quality_id")
+//    private String qualityId;
 
     private String width;
     private String fani;
